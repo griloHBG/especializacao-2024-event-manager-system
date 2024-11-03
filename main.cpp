@@ -190,7 +190,7 @@ int main() {
         for (const auto &[letter, description]:commands) {
             std::cout << "\t" << std::setw(15) << description << " (" << letter << ")" << std::endl;
         }
-        std::cout << ">";
+        std::cout << "> ";
 #ifdef NO_USER_INPUT
         ss >> command_letter;
 #else
