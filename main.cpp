@@ -103,13 +103,18 @@ public:
         }
     }
 
-    std::optional<Event> handover() {
-        if(event_list.empty()) {
+    std::optional<Event> handover(bool success) {
+        if(success) {
+            if (event_list.empty()) {
+                return {};
+            }
+            Event e = event_list.front();
+            event_list.pop_front();
+            return e;
+        } else {
+            std::cout << "HANDOVER FAILED!" << std::endl;
             return {};
         }
-        Event e = event_list.front();
-        event_list.pop_front();
-        return e;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const EventManagerSystem& ems);
@@ -200,7 +205,7 @@ int main() {
                 break;
             case CommandLetter::HANDOVER_EVENT:
                 std::cout << "handover event" << std::endl;
-                if ((handedover_event = ems.handover()))
+                if ((handedover_event = ems.handover(random_number > 24)))
                 {
                     std::cout << "Event handedover: " << *handedover_event << std::endl;
                     std::cout << ems << std::endl;
