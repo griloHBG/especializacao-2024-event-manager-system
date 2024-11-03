@@ -181,8 +181,9 @@ int main() {
     std::optional<Event> handedover_event{};
     Event new_event{};
 
-
+#ifdef NO_USER_INPUT
     std::stringstream ss{"aaaaaaaaaahhhhhq"};
+#endif
 
     while(command_letter != CommandLetter::QUIT) {
         std::cout   << "Choose one option:" << std::endl;
@@ -190,8 +191,11 @@ int main() {
             std::cout << "\t" << std::setw(15) << description << " (" << letter << ")" << std::endl;
         }
         std::cout << ">";
-        //std::cin >> command_letter;
+#ifdef NO_USER_INPUT
         ss >> command_letter;
+#else
+        std::cin >> command_letter;
+#endif
         std::cout << std::endl;
 
         switch(command_letter) {
