@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <random>
 #include <optional>
+#include "EventManagerSystem.h"
 
 std::random_device rd;
 std::mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
@@ -20,122 +21,6 @@ enum CommandLetter {
     PRINT_EVENTS='p',
     QUIT='q',
 };
-
-enum class Priority {
-    HIGH,
-    LOW,
-};
-
-
-std::ostream& operator<<(std::ostream& os, const Priority p){
-    switch(p) {
-        case Priority::HIGH:
-            os << "high";
-            break;
-        case Priority::LOW:
-            os << "low";
-            break;
-        default:
-            std::cerr << "should not happen!";
-            std::exit(1);
-            break;
-    }
-    return os;
-}
-
-struct Event {
-    std::string description;
-    Priority priority;
-    unsigned long long int time_ms;
-};
-
-std::ostream& operator<<(std::ostream& os, const Event& e){
-    os << std::setw(12) << e.description << " | " << std::setw(6) << e.priority << " | " <<  std::setw(8) << e.time_ms;
-
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const std::forward_list<Event>& list){
-    for(auto& e:list) {
-        os << e << '\n';
-    }
-
-    return os;
-}
-
-class EventManagerSystem {
-
-    using EventList = std::forward_list<Event>;
-    using EventListIterator = std::forward_list<Event>::iterator;
-
-public:
-    void add_event(Event&& e){
-        switch(e.priority){
-            case Priority::HIGH:
-                if (last_high_prio_event == event_list.end()) {
-                    event_list.push_front(e);
-                    last_high_prio_event = event_list.begin();
-                } else {
-                    last_high_prio_event = event_list.insert_after(last_high_prio_event, e);
-                }
-                break;
-            case Priority::LOW:
-                if (first_low_prio_event == event_list.end()) {
-                    if (last_high_prio_event == event_list.end()) {
-                        //high priority EMPTY and low priority EMPTY : add to the begin
-                        event_list.push_front(e);
-                        first_low_prio_event = event_list.begin();
-                        last_low_prio_event = event_list.begin();
-                    } else {
-                        //high priority NOT EMPTY and low priority EMPTY : add after the last high priority
-                        first_low_prio_event = event_list.insert_after(last_high_prio_event, e);
-                        last_low_prio_event = first_low_prio_event;
-                    }
-                } else {
-                    //low priority NOT EMPTY : add after the last low priority
-                    last_low_prio_event = event_list.insert_after(last_low_prio_event, e);
-                }
-
-                break;
-            default:
-                std::cerr << "erro!" << std::endl;
-                std::exit(1);
-        }
-    }
-
-    std::optional<Event> handover(bool success) {
-        if(success) {
-            if (event_list.empty()) {
-                return {};
-            }
-            Event e = event_list.front();
-            event_list.pop_front();
-            return e;
-        } else {
-            std::cout << "HANDOVER FAILED!" << std::endl;
-            return {};
-        }
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const EventManagerSystem& ems);
-
-private:
-    EventList event_list{};
-    EventListIterator last_high_prio_event{nullptr};
-    EventListIterator first_low_prio_event{nullptr};
-    EventListIterator last_low_prio_event{nullptr};
-/*
-    static bool time_compare(const Event& e1, const Event& e2) {
-        return e1.time_ms < e2.time_ms;
-    }
-*/
-};
-
-std::ostream& operator<<(std::ostream& os, const EventManagerSystem& ems){
-    os << ems.event_list;
-
-    return os;
-}
 
 std::string random_name[]= {
 "00area",      "01book",          "02business",  "03case",  "04child",     "05company",   "06country",   "07day",       "08eye",   "09fact",
@@ -163,7 +48,7 @@ int main() {
 
     std::exit(0);
 */
-    EventManagerSystem ems{};
+    EMS::EventManagerSystem ems{};
 
     std::map<char, std::string> commands {
         {CommandLetter::ADD_EVENT, "Add event"},
@@ -178,8 +63,8 @@ int main() {
 
     unsigned long long int time = 0;
 
-    std::optional<Event> handedover_event{};
-    Event new_event{};
+    std::optional<EMS::Event> handedover_event{};
+    EMS::Event new_event{};
 
 #ifdef NO_USER_INPUT
     std::stringstream ss{"aaaaaaaaaahhhhhq"};
@@ -201,7 +86,7 @@ int main() {
         switch(command_letter) {
             case CommandLetter::ADD_EVENT:
                 std::cout << "add event" << std::endl;
-                new_event = Event{random_name[random_number], random_number > 24 ? Priority::HIGH : Priority::LOW, time};
+                new_event = EMS::Event{random_name[random_number], random_number > 24 ? EMS::Priority::HIGH : EMS::Priority::LOW, time};
                 std::cout << "New Event: " << new_event << std::endl;
                 ems.add_event(std::move(new_event));
                 std::cout << "Event List: \n" << ems << std::endl;
